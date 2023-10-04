@@ -29,6 +29,16 @@ class ReferencePath:
         self.left_lut_x, self.left_lut_y = self.get_interpolated_path_casadi('lut_left_x', 'lut_left_y', left_path, self.s_track)
         self.right_lut_x, self.right_lut_y = self.get_interpolated_path_casadi('lut_right_x', 'lut_right_y', right_path, self.s_track)
 
+        # plt.figure(1)
+        # plt.clf()
+        # plt.plot(self.path[:, 0], self.path[:, 1], label="center", color='blue', alpha=0.7)
+        # plt.plot(left_path[:, 0], left_path[:, 1], label="left", color='green', alpha=0.7)
+        # plt.plot(right_path[:, 0], right_path[:, 1], label="right", color='red', alpha=0.7)
+
+        # plt.legend()
+        # plt.gca().set_aspect('equal', adjustable='box')
+        # plt.show()
+
     def init_path(self):
         filename = 'maps/' + self.map_name + '_centerline.csv'
         xs, ys, w_rs, w_ls = [], [], [], []
@@ -56,7 +66,8 @@ class ReferencePath:
 
         self.el_lengths = np.linalg.norm(np.diff(self.track[:, :2], axis=0), axis=1)
         self.s_track = np.insert(np.cumsum(self.el_lengths), 0, 0)
-        self.psi, self.kappa = tph.calc_head_curv_num.calc_head_curv_num(self.track, self.el_lengths, False)
+        self.psi, self.kappa = tph.calc_head_curv_num.calc_head_curv_num(self.track, self.el_lengths, False) 
+        self.psi += np.pi/2
 
         angle_diffs = np.diff(self.psi, axis=0)
         for i in range(len(angle_diffs)):
@@ -65,6 +76,7 @@ class ReferencePath:
             elif angle_diffs[i] < -np.pi:
                 self.psi[i+1:] += 2*np.pi
 
+        # self.nvecs = tph.calc_normal_vectors_ahead.calc_normal_vectors_ahead(self.psi)
         self.nvecs = tph.calc_normal_vectors_ahead.calc_normal_vectors_ahead(self.psi-np.pi/2)
 
         self.track_length = self.s_track[-1]
@@ -119,11 +131,17 @@ class ReferencePath:
         plt.figure(2)
         plt.clf()
 
-        plt.plot(self.center_lut_x(self.s_track), self.center_lut_y(self.s_track), label="center", color='blue', alpha=0.7)
-        plt.plot(self.left_lut_x(self.s_track), self.left_lut_y(self.s_track), label="left", color='green', alpha=0.7)
-        plt.plot(self.right_lut_x(self.s_track), self.right_lut_y(self.s_track), label="right", color='green', alpha=0.7)
+        zs = np.zeros(len(self.s_track), dtype=float)
+        xs, ys = np.asarray(self.center_lut_x(self.s_track))[:, 0], np.asarray(self.center_lut_y(self.s_track))[:, 0]
+        plt.plot(xs, ys, label="center", color='blue', alpha=0.7)
+        xs, ys = np.array(self.left_lut_x(self.s_track))[:, 0], np.array(self.left_lut_y(self.s_track))[:, 0]
+        plt.plot(xs, ys, label="left", color='green', alpha=0.7)
+        xs, ys = np.array(self.right_lut_x(self.s_track))[:, 0], np.array(self.right_lut_y(self.s_track))[:, 0]
+        plt.plot(xs, ys, label="right", color='green', alpha=0.7)
 
         # plt.show()
+        plt.pause(0.00001)
+        print("")
 
 
     def plot_angles(self):

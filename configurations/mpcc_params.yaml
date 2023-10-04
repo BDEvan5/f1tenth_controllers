@@ -1,0 +1,20 @@
+vehicle_speed: 2
+
+wheelbase: 0.33
+vehicle_width: 0.3
+
+weight_progress: 1
+weight_lag: 1
+weight_contour: 100
+weight_steer: 1
+
+dt: 0.2
+N: 10
+
+p_initial: 2
+delta_max: 0.4
+p_min: 0
+p_max: 4 # What should this be?
+
+psi_min: -10
+psi_max: 10

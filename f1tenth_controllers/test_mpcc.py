@@ -3,6 +3,7 @@ from f1tenth_controllers.mpcc.ConstantMPCC import ConstantMPCC
 import numpy as np
 import yaml 
 from argparse import Namespace
+from f1tenth_controllers.analysis.plot_trajectory import plot_analysis
 
 
 def load_configuration(config_name):
@@ -25,10 +26,12 @@ def run_test():
     print(f"Testing....")
     std_config = load_configuration("std_config")
 
-    simulator = F1TenthSim(map_name, std_config, True)
+    vehicle_name = "TestMPCC1"
+    simulator = F1TenthSim(map_name, std_config, True, vehicle_name)
     planner = ConstantMPCC(simulator.map_name)
 
     run_simulation_loop_laps(simulator, planner, 1)
+    plot_analysis(vehicle_name)
 
 def run_profiling(function, name):
     import cProfile, pstats, io
@@ -47,6 +50,7 @@ def run_profiling(function, name):
 if __name__ == "__main__":
     # run_test()
     run_profiling(run_test, "mpcc")
+    # run_test()
 
 
 
