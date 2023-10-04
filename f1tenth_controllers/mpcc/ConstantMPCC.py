@@ -2,20 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import casadi as ca
 
-from f1tenth_controllers.mpcc.TrackLine import TrackLine
 from f1tenth_controllers.mpcc.ReferencePath import ReferencePath
 from f1tenth_controllers.mpcc.mpcc_utils import *
 
 VERBOSE = False
 # VERBOSE = True
-SPEED = 2 # m/s
-L = 0.33
-WIDTH = 0.3 # m on each side
 
-WEIGHT_PROGRESS = 0.0
-WEIGHT_LAG = 500
-WEIGHT_CONTOUR = 0.1
-WEIGHT_STEER = 1000
 
 NX = 4
 NU = 2
@@ -24,9 +16,9 @@ class ConstantMPCC:
     def __init__(self, map_name):
         self.params = load_mpcc_params()
         self.rp = ReferencePath(map_name, 0.25)
-        self.track = TrackLine(map_name, False)
         self.N = self.params.N
         self.dt = self.params.dt
+        self.SPEED = self.params.vehicle_speed # captialised since it is a const
         
         self.x_min, self.y_min = np.min(self.rp.path, axis=0) - 2
         self.x_max, self.y_max = np.max(self.rp.path, axis=0) + 2
@@ -51,7 +43,7 @@ class ConstantMPCC:
 
         states = ca.vertcat(x, y, psi, s)
         controls = ca.vertcat(delta, p)
-        rhs = ca.vertcat(SPEED * ca.cos(psi), SPEED * ca.sin(psi), (SPEED / L) * ca.tan(delta), p)  # dynamic equations of the states
+        rhs = ca.vertcat(self.SPEED * ca.cos(psi), self.SPEED * ca.sin(psi), (self.SPEED / self.params.wheelbase) * ca.tan(delta), p)  # dynamic equations of the states
         self.f = ca.Function('f', [states, controls], [rhs])  # nonlinear mapping function f(x,u)
         self.U = ca.MX.sym('U', NU, self.N)
         self.X = ca.MX.sym('X', NX, (self.N + 1))
@@ -83,37 +75,28 @@ class ConstantMPCC:
         st = self.X[:, 0]  # initial state
         self.g = ca.vertcat(self.g, st - self.P[:NX])  # initial condition constraints
         for k in range(self.N):
-            st = self.X[:, k]
+            st = self.X[:, k]  # remove
             st_next = self.X[:, k + 1]
-            con = self.U[:, k]
+            con = self.U[:, k] # remove
             
             t_angle = self.rp.angle_lut_t(st_next[3])
             ref_x, ref_y = self.rp.center_lut_x(st_next[3]), self.rp.center_lut_y(st_next[3])
-            #Contouring error
-            e_c = ca.sin(t_angle) * (st_next[0] - ref_x) - ca.cos(t_angle) * (st_next[1] - ref_y)
-            #Lag error
-            e_l = -ca.cos(t_angle) * (st_next[0] - ref_x) - ca.sin(t_angle) * (st_next[1] - ref_y)
+            countour_error = ca.sin(t_angle) * (st_next[0] - ref_x) - ca.cos(t_angle) * (st_next[1] - ref_y)
+            lag_error = -ca.cos(t_angle) * (st_next[0] - ref_x) - ca.sin(t_angle) * (st_next[1] - ref_y)
 
-            self.obj = self.obj + e_c **2 * self.params.weight_contour  
-            self.obj = self.obj + e_l **2 * self.params.weight_lag
-            # self.obj = self.obj - con[1] * WEIGHT_PROGRESS 
+            self.obj = self.obj + countour_error **2 * self.params.weight_contour  
+            self.obj = self.obj + lag_error **2 * self.params.weight_lag
+            self.obj = self.obj - con[1] * self.params.weight_progress 
             self.obj = self.obj + (con[0]) ** 2 * self.params.weight_steer  # minimize the use of steering input
 
             k1 = self.f(st, con)
             st_next_euler = st + (self.dt * k1)
             self.g = ca.vertcat(self.g, st_next - st_next_euler)  # compute constraints
 
-            # path boundary constraints
-            self.g = ca.vertcat(self.g, self.P[NX + 2 * k] * st_next[0] - self.P[NX + 2 * k + 1] * st_next[1])  # LB<=ax-by<=UB  --represents half space planes
-
-            
+            self.g = ca.vertcat(self.g, self.P[NX + 2 * k] * st_next[0] - self.P[NX + 2 * k + 1] * st_next[1])  # LB<=ax-by<=UB  --represents half space path boundary planes
 
     def init_solver(self):
-        opts = {}
-        opts["ipopt"] = {}
-        opts["ipopt"]["max_iter"] = 2000
-        opts["ipopt"]["print_level"] = 0
-        opts["print_time"] = 0
+        opts = {"ipopt": {"max_iter": 2000, "print_level": 0}, "print_time": 0}
         
         OPT_variables = ca.vertcat(ca.reshape(self.X, NX * (self.N + 1), 1),
                                 ca.reshape(self.U, NU * self.N, 1))
@@ -132,12 +115,12 @@ class ConstantMPCC:
         p = self.generate_constraints_and_parameters(x0)
         x0_init = np.copy(self.X0)
         states, controls, solved_status = self.solve(p)
-        # if not solved_status:
-        #     self.warm_start = True
-        #     p = self.generate_constraints_and_parameters(x0)
-        #     states, controls, solved_status = self.solve(p)
-        #     if VERBOSE:
-        #         print(f"Solve failed: ReWarm Start: New outcome: {solved_status}")
+        if not solved_status:
+            self.warm_start = True
+            p = self.generate_constraints_and_parameters(x0)
+            states, controls, solved_status = self.solve(p)
+            if VERBOSE:
+                print(f"Solve failed: ReWarm Start: New outcome: {solved_status}")
 
         s = states[:, 3]
         s = [s[k] if s[k] < self.rp.track_length else s[k] - self.rp.track_length for k in range(self.N+1)]
@@ -259,8 +242,6 @@ class ConstantMPCC:
             # print(s_next)
             self.X0[k, :] = np.array([x_next.full()[0, 0], y_next.full()[0, 0], psi_next, s_next])
 
-        # print(self.X0[:, 3])
-        
         self.warm_start = False
 
 

@@ -3,12 +3,12 @@ vehicle_speed: 2
 wheelbase: 0.33
 vehicle_width: 0.3
 
-weight_progress: 1
+weight_progress: 0
 weight_lag: 1
-weight_contour: 100
+weight_contour: 10
 weight_steer: 1
 
-dt: 0.2
+dt: 0.1
 N: 10
 
 p_initial: 2
