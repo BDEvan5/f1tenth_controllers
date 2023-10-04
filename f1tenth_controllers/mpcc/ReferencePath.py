@@ -100,6 +100,8 @@ class ReferencePath:
         idx = np.argmin(distances)
         x, h = self.interp_pts(idx, distances)
         s = (self.s_track[idx] + x) 
+        if s > self.s_track[-1]:
+            raise ValueError
 
         return s
 
