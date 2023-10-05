@@ -72,6 +72,7 @@ class TrajectoryPlotter:
                 self.plot_trajectory()
                 self.plot_analysis()
                 self.plot_tracking_accuracy()
+                self.plot_steering_profile()    
 
     def load_lap_data(self):
         try:
@@ -87,15 +88,16 @@ class TrajectoryPlotter:
     
     def calculate_state_progress(self):
         progresses = []
+        n = len(self.states)
         for i in range(len(self.states)):
             p = self.std_track.calculate_progress_percent(self.states[i, 0:2])
             if i < 20 and p > 0.9:
                 p = 0.0
-            if i > 100 and p < 0.1:
+            if i > n * 0.3 and p < 0.1:
                 p = 1.0
             progresses.append(p)
             
-        self.track_progresses = np.array(progresses)
+        self.track_progresses = np.array(progresses) * 100
 
     def plot_analysis(self):
         fig = plt.figure(figsize=(8, 6))
@@ -159,6 +161,19 @@ class TrajectoryPlotter:
         plt.savefig(name + ".svg", bbox_inches='tight', pad_inches=0)
         plt.savefig(name + ".pdf", bbox_inches='tight', pad_inches=0)
 
+    def plot_steering_profile(self):
+        plt.figure(figsize=(7, 2))
+        plt.clf()
+        plt.plot(self.track_progresses[:-1], self.states[:-1, 2], label="State", color=periwinkle)
+        plt.plot(self.track_progresses[:-1], self.actions[:-1, 0], label="Actions", color=sunset_orange)
+        max_value = np.max(np.abs(self.actions[:-1, 0])) * 1.1
+        plt.ylim(-max_value, max_value)
+        plt.grid(True)
+        plt.legend()
+        plt.ylabel("Steering (rad)")
+
+        plt.savefig(f"{self.test_folder}Steering_{self.map_name}_{self.lap_n}.png", bbox_inches='tight', pad_inches=0)
+
     def plot_tracking_accuracy(self):
         pts = self.states[:, 0:2]
         thetas = self.states[:, 4]
@@ -167,16 +182,32 @@ class TrajectoryPlotter:
         for i in range(len(pts)):
             track_heading, deviation = self.std_track.get_cross_track_heading(pts[i])
             racing_cross_track.append(deviation)
+        racing_cross_track = np.array(racing_cross_track) * 100
             
         plt.figure(1, figsize=(10, 5))
         plt.clf()
         plt.plot(self.track_progresses, racing_cross_track)
         
-        plt.title("Tracking Accuracy (m)")
+        plt.title("Tracking Accuracy (cm)")
         plt.xlabel("Track Progress (%)")
         plt.grid(True)
         plt.tight_layout()
         plt.savefig(f"{self.test_folder}Tracking_{self.map_name}_{self.lap_n}.svg", bbox_inches='tight', pad_inches=0)
+        plt.savefig(f"{self.test_folder}Tracking_{self.map_name}_{self.lap_n}.pdf", bbox_inches='tight', pad_inches=0)
+
+            
+        plt.figure(1, figsize=(5, 4))
+        plt.clf()
+        plt.hist(racing_cross_track, bins=20)
+        
+        plt.xlabel("Tracking Accuracy (cm)")
+        plt.ylabel("Frequency")
+        plt.grid(True)
+        plt.tight_layout()
+        plt.savefig(f"{self.test_folder}TrackingHist_{self.map_name}_{self.lap_n}.svg", bbox_inches='tight', pad_inches=0)
+        plt.savefig(f"{self.test_folder}TrackingHist_{self.map_name}_{self.lap_n}.png", bbox_inches='tight', pad_inches=0)
+
+        
 
 def plot_analysis(vehicle_name):
     TestData = TrajectoryPlotter()

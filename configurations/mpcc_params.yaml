@@ -8,7 +8,7 @@ weight_lag: 1
 weight_contour: 10
 weight_steer: 1
 
-dt: 0.1
+dt: 0.05
 N: 10
 
 p_initial: 2
