@@ -17,6 +17,14 @@ class CenterLine:
         progress = self.s_track[np.argmin(dists)] / self.s_track[-1]
 
         return progress
+    
+    def get_start_pose(self):
+        pose = np.zeros(3)
+        pose[:2] = self.center_line[0, :2]
+        pose[2] = np.arctan2(self.center_line[1, 1] - self.center_line[0, 1],
+                            self.center_line[1, 0] - self.center_line[0, 0])
+        
+        return pose
 
 #TODO: change this to use arrays not lists.
 class SimulatorHistory:

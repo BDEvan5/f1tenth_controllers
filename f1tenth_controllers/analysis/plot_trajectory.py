@@ -60,7 +60,7 @@ class TrajectoryPlotter:
         testing_logs = glob.glob(f"{folder}*.npy")
         for test_log in testing_logs:
             test_folder_name = test_log.split("/")[-1]
-            self.map_name = test_folder_name.split("_")[1].lower()
+            self.map_name = test_folder_name.split("_")[1]
         
             self.map_data = MapData(self.map_name)
             self.std_track = Track(self.map_name)
@@ -72,7 +72,7 @@ class TrajectoryPlotter:
                 self.plot_trajectory()
                 self.plot_analysis()
                 self.plot_tracking_accuracy()
-                self.plot_steering_profile()    
+                # self.plot_steering_profile()    
 
     def load_lap_data(self):
         try:
@@ -221,7 +221,7 @@ def analyse_folder():
     TestData = TrajectoryPlotter()
     # TestData.explore_folder("Data/")
 
-    TestData.process_folder("Logs/TestMPCC1/")
+    TestData.process_folder("Logs/TestMPCC/")
 
 
 if __name__ == '__main__':

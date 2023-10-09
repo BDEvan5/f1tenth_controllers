@@ -95,7 +95,7 @@ class F1TenthSim:
         
         done = False
         if progress > 0.99 and self.current_time > 5: done = True
-        if self.current_time > 150: 
+        if self.current_time > 300: 
             print("Time limit reached")
             done = True
 
@@ -118,23 +118,19 @@ class F1TenthSim:
         return False
     
 
-    def reset(self, poses):
+    def reset(self):
         """
-        Reset the gym environment by given poses
-
-        Args:
-            poses (np.ndarray (num_agents, 3)): poses to reset agents to
+        Reset the gym environment to a pose
 
         Returns:
             obs (dict): observation of the current step
-            reward (float, default=self.timestep): step reward, currently is physics timestep
             done (bool): if the simulation is done
-            info (dict): auxillary information dictionary
         """
         # reset counters and data members
         self.current_time = 0.0
 
-        self.dynamics_simulator.reset(poses)
+        pose = self.center_line.get_start_pose() #TODO: update this to give different poses based on lap number.
+        self.dynamics_simulator.reset(pose)
 
         # get no input observations
         action = np.zeros(2)
