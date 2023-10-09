@@ -2,9 +2,20 @@ from f1tenth_controllers.f1tenth_sim import F1TenthSim
 from f1tenth_controllers.mpcc.ConstantMPCC import ConstantMPCC
 import numpy as np
 import yaml 
+import time
 from argparse import Namespace
 from f1tenth_controllers.analysis.plot_trajectory import plot_analysis
 
+map_list = ["Austin",
+                 "Catalunya",
+                 "Monza",
+                 "Sakhir",
+                 "SaoPaulo",
+                 "Sepang",
+                 "Silverstone",
+                 "Spielberg",
+                 "Zandvoort",
+                 "Oschersleben"]
 
 def load_configuration(config_name):
     with open(f"configurations/{config_name}.yaml", 'r') as file:
@@ -46,12 +57,31 @@ def run_profiling(function, name):
         ps.print_stats()
         f.write(s.getvalue())
 
+def test_all_maps():
+    std_config = load_configuration("std_config")
+    start_time = time.time()
+    for map_name in map_list:
+        map_start_time = time.time()
+        print(f"Testing on map {map_name}")
+
+        vehicle_name = "TestMPCC"
+        simulator = F1TenthSim(map_name, std_config, True, vehicle_name)
+        planner = ConstantMPCC(simulator.map_name)
+
+        run_simulation_loop_laps(simulator, planner, 1)
+
+        print(f"Time taken for map {map_name}: {time.time() - map_start_time}")
+        print(f"")
+
+    print(f"Total time taken: {time.time() - start_time}")
+    plot_analysis(vehicle_name)
+
 
 if __name__ == "__main__":
     # run_test()
-    run_profiling(run_test, "mpcc")
+    # run_profiling(run_test, "mpcc")
     # run_test()
-
+    test_all_maps()
 
 
 
