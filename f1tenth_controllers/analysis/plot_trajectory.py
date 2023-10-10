@@ -59,27 +59,27 @@ class TrajectoryPlotter:
         
         testing_logs = glob.glob(f"{folder}*.npy")
         for test_log in testing_logs:
+            self.test_log_key = test_log.split("/")[-1].split(".")[0].split("_")[1:]
+            self.test_log_key = "_".join(self.test_log_key)
             test_folder_name = test_log.split("/")[-1]
             self.map_name = test_folder_name.split("_")[1]
         
             self.map_data = MapData(self.map_name)
             self.std_track = Track(self.map_name)
 
-            for self.lap_n in range(1):
-                if not self.load_lap_data(): break # no more laps
-                self.calculate_state_progress()
-                
-                self.plot_trajectory()
-                self.plot_analysis()
-                self.plot_tracking_accuracy()
-                # self.plot_steering_profile()    
+            if not self.load_lap_data(test_log): break # no more laps
+            self.calculate_state_progress()
+            
+            self.plot_analysis()
+            self.plot_tracking_accuracy()
+            # self.plot_steering_profile()    
+            self.plot_trajectory()
 
-    def load_lap_data(self):
+    def load_lap_data(self, test_log):
         try:
-            data = np.load(self.test_folder + f"SimLog_{self.map_name}_{self.lap_n}.npy")
+            data = np.load(test_log)
         except Exception as e:
-            print(e)
-            print(f"No data for: " + f"SimLog_{self.map_name}_{self.lap_n}.npy")
+            print(f"No data for: " + test_log)
             return 0
         self.states = data[:, :7]
         self.actions = data[:, 7:]
@@ -127,7 +127,7 @@ class TrajectoryPlotter:
         a3.set_xlabel("Track progress (m)")
 
         plt.tight_layout()
-        plt.savefig(f"{self.test_folder}Analysis_{self.map_name}_{self.lap_n}.svg", bbox_inches='tight', pad_inches=0)  
+        plt.savefig(f"{self.test_folder}Analysis_{self.test_log_key}.svg", bbox_inches='tight', pad_inches=0)  
     
     def plot_trajectory(self): 
         plt.figure(1)
@@ -144,7 +144,7 @@ class TrajectoryPlotter:
 
         norm = plt.Normalize(0, 8)
         lc = LineCollection(segments, cmap='jet', norm=norm)
-        lc.set_array(vs)
+        lc.set_array(self.tracking_accuracy)
         lc.set_linewidth(5)
         line = plt.gca().add_collection(lc)
         cbar = plt.colorbar(line,fraction=0.046, pad=0.04, shrink=0.99)
@@ -156,7 +156,7 @@ class TrajectoryPlotter:
         plt.tight_layout()
         plt.axis('off')
         
-        name = self.test_folder + f"Trajectory_{self.map_name}_{self.lap_n}"
+        name = self.test_folder + f"Trajectory_{self.test_log_key}"
         # std_img_saving(name)
         plt.savefig(name + ".svg", bbox_inches='tight', pad_inches=0)
         plt.savefig(name + ".pdf", bbox_inches='tight', pad_inches=0)
@@ -172,7 +172,7 @@ class TrajectoryPlotter:
         plt.legend()
         plt.ylabel("Steering (rad)")
 
-        plt.savefig(f"{self.test_folder}Steering_{self.map_name}_{self.lap_n}.png", bbox_inches='tight', pad_inches=0)
+        plt.savefig(f"{self.test_folder}Steering_{self.test_log_key}.png", bbox_inches='tight', pad_inches=0)
 
     def plot_tracking_accuracy(self):
         pts = self.states[:, 0:2]
@@ -183,6 +183,8 @@ class TrajectoryPlotter:
             track_heading, deviation = self.std_track.get_cross_track_heading(pts[i])
             racing_cross_track.append(deviation)
         racing_cross_track = np.array(racing_cross_track) * 100
+
+        self.tracking_accuracy = racing_cross_track
             
         plt.figure(1, figsize=(10, 5))
         plt.clf()
@@ -192,8 +194,8 @@ class TrajectoryPlotter:
         plt.xlabel("Track Progress (%)")
         plt.grid(True)
         plt.tight_layout()
-        plt.savefig(f"{self.test_folder}Tracking_{self.map_name}_{self.lap_n}.svg", bbox_inches='tight', pad_inches=0)
-        plt.savefig(f"{self.test_folder}Tracking_{self.map_name}_{self.lap_n}.pdf", bbox_inches='tight', pad_inches=0)
+        plt.savefig(f"{self.test_folder}Tracking_{self.test_log_key}.svg", bbox_inches='tight', pad_inches=0)
+        # plt.savefig(f"{self.test_folder}Tracking_{self.test_log_key}.pdf", bbox_inches='tight', pad_inches=0)
 
             
         plt.figure(1, figsize=(5, 4))
@@ -204,8 +206,8 @@ class TrajectoryPlotter:
         plt.ylabel("Frequency")
         plt.grid(True)
         plt.tight_layout()
-        plt.savefig(f"{self.test_folder}TrackingHist_{self.map_name}_{self.lap_n}.svg", bbox_inches='tight', pad_inches=0)
-        plt.savefig(f"{self.test_folder}TrackingHist_{self.map_name}_{self.lap_n}.png", bbox_inches='tight', pad_inches=0)
+        plt.savefig(f"{self.test_folder}TrackingHist_{self.test_log_key}.svg", bbox_inches='tight', pad_inches=0)
+        # plt.savefig(f"{self.test_folder}TrackingHist_{self.map_name}_{self.lap_n}.png", bbox_inches='tight', pad_inches=0)
 
         
 
@@ -221,7 +223,8 @@ def analyse_folder():
     TestData = TrajectoryPlotter()
     # TestData.explore_folder("Data/")
 
-    TestData.process_folder("Logs/TestMPCC/")
+    # TestData.process_folder("Logs/TestMPCC/")
+    TestData.process_folder("Logs/TunePointsMPCC/")
 
 
 if __name__ == '__main__':

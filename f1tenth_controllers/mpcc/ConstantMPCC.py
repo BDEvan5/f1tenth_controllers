@@ -13,10 +13,13 @@ NX = 4
 NU = 2
 
 class ConstantMPCC:
-    def __init__(self, map_name):
+    def __init__(self, map_name, N=None):
         self.params = load_mpcc_params()
         self.rp = ReferencePath(map_name, 0.25)
-        self.N = self.params.N
+        if N is None:
+            self.N = self.params.N
+        else:
+            self.N = N
 
         self.u0 = np.zeros((self.N, NU))
         self.X0 = np.zeros((self.N + 1, NX))

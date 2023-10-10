@@ -33,7 +33,7 @@ class F1TenthSim:
     """
             seed (int, default=12345): seed for random state and reproducibility
     """
-    def __init__(self, map_name, run_dict, save_history=False, run_name=None):
+    def __init__(self, map_name, run_dict, save_history=False, run_name=None, test_id=None):
         self.run_dict = run_dict
         self.map_name = map_name
         self.timestep = self.run_dict.timestep
@@ -50,7 +50,7 @@ class F1TenthSim:
 
         self.history = None
         if save_history:
-            self.history = SimulatorHistory(run_name)
+            self.history = SimulatorHistory(run_name, test_id)
             self.history.set_path(self.map_name)
 
     def step(self, action):

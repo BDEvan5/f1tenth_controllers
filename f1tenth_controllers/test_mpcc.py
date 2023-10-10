@@ -70,6 +70,7 @@ def test_all_maps():
     std_config = load_configuration("std_config")
     vehicle_name = "TestMPCC4"
 
+    map_name = "Spielberg"
     start_time = time.time()
     for map_name in map_list:
     # for map_name in mini_map_list:
@@ -88,11 +89,38 @@ def test_all_maps():
     plot_analysis(vehicle_name)
 
 
+def tune_mpcc_points():
+    std_config = load_configuration("std_config")
+    vehicle_name = "TunePointsMPCC"
+    map_name = "Sepang"
+
+    start_time = time.time()
+    # point_list = [5, 10]
+    point_list = [4, 8]
+    # point_list = [15, 20]
+    # point_list = [5, 10, 15, 20]
+    for points in point_list:
+        map_start_time = time.time()
+        print(f"Testing on map {map_name} with {points} points")
+
+        simulator = F1TenthSim(map_name, std_config, True, vehicle_name, test_id=f"{points}")
+        planner = ConstantMPCC(simulator.map_name, points)
+
+        run_simulation_loop_laps(simulator, planner, 1)
+
+        print(f"Time taken for {points} points: {(time.time() - map_start_time):.4f}")
+        print(f"")
+
+    print(f"Total time taken: {(time.time() - start_time):.4f}")
+    plot_analysis(vehicle_name)
+
+
 if __name__ == "__main__":
     # run_test()
     # run_profiling(run_test, "mpcc")
     # run_test()
-    test_all_maps()
+    # test_all_maps()
+    tune_mpcc_points()
 
 
 
