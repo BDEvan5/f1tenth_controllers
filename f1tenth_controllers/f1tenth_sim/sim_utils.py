@@ -1,7 +1,9 @@
 import numpy as np
 from scipy import interpolate
 import datetime 
+import yaml
 import os
+
 
 class CenterLine:
     def __init__(self, map_name) -> None:
@@ -65,3 +67,12 @@ class SimulatorHistory:
         self.actions = []
         self.lap_n += 1
         
+    def save_run_dict(self, run_dict, computation_time):
+        run_dict = vars(run_dict)
+        run_dict["computation_time"] = computation_time
+
+        with open(self.current_path + f"RunDict_{self.map_name}_{self.test_id}.yaml", "w") as f:
+            yaml.dump(run_dict, f)
+
+
+

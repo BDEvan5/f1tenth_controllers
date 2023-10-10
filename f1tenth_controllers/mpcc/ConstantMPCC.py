@@ -13,13 +13,14 @@ NX = 4
 NU = 2
 
 class ConstantMPCC:
-    def __init__(self, map_name, N=None):
-        self.params = load_mpcc_params()
-        self.rp = ReferencePath(map_name, 0.25)
+    def __init__(self, run_dict, N=None):
+        self.params = run_dict
+        self.rp = ReferencePath(run_dict.map_name, 0.25)
         if N is None:
             self.N = self.params.N
         else:
             self.N = N
+        self.dt = self.params.n_sim_steps * self.params.timestep
 
         self.u0 = np.zeros((self.N, NU))
         self.X0 = np.zeros((self.N + 1, NX))
@@ -70,7 +71,7 @@ class ConstantMPCC:
         for k in range(self.N):
             st_next = self.X[:, k + 1]
             k1 = self.f(self.X[:, k], self.U[:, k])
-            st_next_euler = self.X[:, k] + (self.params.dt * k1)
+            st_next_euler = self.X[:, k] + (self.dt * k1)
             self.g = ca.vertcat(self.g, st_next - st_next_euler)  # add dynamics constraint
 
             self.g = ca.vertcat(self.g, self.P[NX + 2 * k] * st_next[0] - self.P[NX + 2 * k + 1] * st_next[1])  # LB<=ax-by<=UB  :represents path boundary constraints
@@ -172,7 +173,7 @@ class ConstantMPCC:
         self.X0 = np.zeros((self.N + 1, NX))
         self.X0[0, :] = initial_state
         for k in range(1, self.N + 1):
-            s_next = self.X0[k - 1, 3] + self.params.p_initial * self.params.dt
+            s_next = self.X0[k - 1, 3] + self.params.p_initial * self.dt
 
             psi_next = self.rp.angle_lut_t(s_next).full()[0, 0]
             x_next, y_next = self.rp.center_lut_x(s_next), self.rp.center_lut_y(s_next)

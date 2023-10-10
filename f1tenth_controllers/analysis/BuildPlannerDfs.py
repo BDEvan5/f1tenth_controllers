@@ -4,38 +4,20 @@ import os
 import pandas as pd
 
 
-from f1tenth_controllers.map_utils.Track import Track 
-from f1tenth_controllers.map_utils.TrackingAccuracy import TrackingAccuracy
-
-
-SAVE_PDF = False
-# SAVE_PDF = True
-
-
-def ensure_path_exists(folder):
-    if not os.path.exists(folder):
-        os.makedirs(folder)
-
 
 def load_agent_test_data(file_name):
-    try:
-        data = np.load(file_name)
-    except Exception as e:
-        print(f"No data for: " + file_name)
-        return None, None
-    
-    states = data[:, :7]
-    actions = data[:, 7:]
+    data = np.load(file_name)
 
-    return states, actions
+    return data[:, :7], data[:, 7:]
 
 
-def create_main_agent_df(agent_path, test_laps=20):
+def build_planner_df(vehicle_name):
+    agent_path = f"Logs/{vehicle_name}/"
     agent_data = []
-    vehicle_name = agent_path.split("/")[-2]
     print(f"Vehicle name: {vehicle_name}")
     
     testing_logs = glob.glob(f"{agent_path}*.npy")
+    if len(testing_logs) == 0: raise ValueError("No logs found")
     for test_log in testing_logs:
         test_folder_name = test_log.split("/")[-1]
         if test_folder_name[:6] != "SimLog": continue
@@ -47,9 +29,8 @@ def create_main_agent_df(agent_path, test_laps=20):
         lap_number = test_name_list[3].split(".")[0]
     
         states, actions = load_agent_test_data(test_log)
-        if states is None: break
 
-        time = len(states) /20 # problem here due to frequency
+        time = len(states) /20 #! problem here due to frequency
         ss = np.linalg.norm(np.diff(states[:, 0:2], axis=0), axis=1)
         total_distance = np.sum(ss)
 
@@ -66,22 +47,8 @@ def create_main_agent_df(agent_path, test_laps=20):
 
 
 
-
-def main():
-    p = "Logs/"
-    
-    path = p + f"TunePointsMPCC/"
-
-    vehicle_folders = glob.glob(f"{path}")
-
-    for j, path in enumerate(vehicle_folders):
-        if path.split("/")[-2] == "Imgs": continue
-
-        create_main_agent_df(path)
-
-
 if __name__ == '__main__':
-    main()
+    build_planner_df("TunePointsMPCC2")
 
 
 

@@ -1,11 +1,11 @@
 import csv
 import numpy as np
-import  matplotlib.pyplot as plt
 from numba import njit
-import trajectory_planning_helpers as tph
 from scipy.interpolate import splev, splprep
 from scipy.optimize import fmin
 from scipy.spatial import distance 
+import glob, os
+
 
 class TrackingAccuracy:
     def __init__(self, map_name) -> None:
@@ -84,4 +84,39 @@ def dist_to_p(t_glob: np.ndarray, path: list, p: np.ndarray):
     s = np.concatenate(s)
     return distance.euclidean(p, s)
 
+
+
+def load_agent_test_data(file_name):
+    data = np.load(file_name)
+    
+    return data[:, :7], data[:, 7:]
+
+
+def calculate_tracking_accuracy(vehicle_name):
+    agent_path = f"Logs/{vehicle_name}/"
+    print(f"Vehicle name: {vehicle_name}")
+    
+    testing_logs = glob.glob(f"{agent_path}*.npy")
+    if len(testing_logs) == 0: raise ValueError("No logs found")
+    for test_log in testing_logs:
+        test_folder_name = test_log.split("/")[-1]
+        test_log_key = "_".join(test_folder_name.split(".")[0].split("_")[1:])
+        file_name = f"{agent_path}TrackingAccuracy_{test_log_key}.npy"
+        if os.path.exists(file_name): continue
+
+        print(f"Analysing log: {test_folder_name}")
+
+        testing_map = test_folder_name.split("_")[1]
+        std_track = TrackingAccuracy(testing_map)
+        states, actions = load_agent_test_data(test_log)
+
+        progresses, cross_track = std_track.calculate_tracking_accuracy(states[:, 0:2]) 
+
+        save_data = np.column_stack((progresses, cross_track))
+        np.save(file_name, save_data)
+
+
+
+if __name__ == "__main__":
+    calculate_tracking_accuracy("TunePointsMPCC2")
 

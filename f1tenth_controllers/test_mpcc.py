@@ -2,9 +2,11 @@ from f1tenth_controllers.f1tenth_sim.f1tenth_sim import F1TenthSim
 from f1tenth_controllers.mpcc.ConstantMPCC import ConstantMPCC
 import numpy as np
 import yaml 
-import time
+import time, os
 from argparse import Namespace
 from f1tenth_controllers.analysis.plot_trajectory import plot_analysis
+from f1tenth_controllers.analysis.BuildPlannerDfs import build_planner_df
+from f1tenth_controllers.analysis.TrackingAccuracy import calculate_tracking_accuracy
 
 map_list = ["Austin",
                  "Catalunya",
@@ -36,6 +38,23 @@ def run_simulation_loop_laps(env, planner, n_laps):
             action = planner.plan(observation)
             observation, done = env.step(action)
     
+
+def setup_run_list(experiment_file):
+    full_path =  "configurations/" + experiment_file + '.yaml'
+    with open(full_path) as file:
+        experiment_dict = yaml.load(file, Loader=yaml.FullLoader)
+        
+    run_list = []
+    for run in experiment_dict['runs']:
+        for key in experiment_dict.keys():
+            if key not in run.keys() and key != "runs":
+                run[key] = experiment_dict[key]
+
+        run['run_name'] = f"{run['map_name']}_{run['test_id']}"
+
+        run_list.append(Namespace(**run))
+
+    return run_list
 
 def run_test():
     # map_name = "aut"
@@ -90,28 +109,18 @@ def test_all_maps():
 
 
 def tune_mpcc_points():
-    std_config = load_configuration("std_config")
-    vehicle_name = "TunePointsMPCC"
-    map_name = "Sepang"
+    run_list = setup_run_list("tune_points_config")
+    vehicle_name = "TunePointsMPCC2"
 
-    start_time = time.time()
-    # point_list = [5, 10]
-    point_list = [6]
-    # point_list = [15, 20]
-    # point_list = [5, 10, 15, 20]
-    for points in point_list:
-        map_start_time = time.time()
-        print(f"Testing on map {map_name} with {points} points")
+    for run_dict in run_list:
 
-        simulator = F1TenthSim(map_name, std_config, True, vehicle_name, test_id=f"{points}")
-        planner = ConstantMPCC(simulator.map_name, points)
+        simulator = F1TenthSim(run_dict, True, vehicle_name)
+        planner = ConstantMPCC(run_dict)
 
         run_simulation_loop_laps(simulator, planner, 1)
 
-        print(f"Time taken for {points} points: {(time.time() - map_start_time):.4f}")
-        print(f"")
-
-    print(f"Total time taken: {(time.time() - start_time):.4f}")
+    calculate_tracking_accuracy(vehicle_name)
+    build_planner_df(vehicle_name)
     plot_analysis(vehicle_name)
 
 

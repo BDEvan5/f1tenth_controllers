@@ -1,9 +1,8 @@
-
-
 from f1tenth_controllers.f1tenth_sim.dynamics_simulator import DynamicsSimulator
 from f1tenth_controllers.f1tenth_sim.laser_models import ScanSimulator2D
-from f1tenth_controllers.f1tenth_sim.utils import CenterLine, SimulatorHistory
+from f1tenth_controllers.f1tenth_sim.sim_utils import CenterLine, SimulatorHistory
 
+import time
 import numpy as np
 
 '''
@@ -33,16 +32,16 @@ class F1TenthSim:
     """
             seed (int, default=12345): seed for random state and reproducibility
     """
-    def __init__(self, map_name, run_dict, save_history=False, run_name=None, test_id=None):
+    def __init__(self, run_dict, save_history=False, run_name=None):
         self.run_dict = run_dict
-        self.map_name = map_name
+        self.map_name = run_dict.map_name
         self.timestep = self.run_dict.timestep
 
         self.scan_simulator = ScanSimulator2D(self.run_dict.num_beams, self.run_dict.fov)
         self.scan_simulator.set_map(self.map_name)
         self.dynamics_simulator = DynamicsSimulator(self.run_dict.random_seed, self.timestep)
         self.scan_rng = np.random.default_rng(seed=self.run_dict.random_seed)
-        self.center_line = CenterLine(map_name)
+        self.center_line = CenterLine(run_dict.map_name)
 
         self.current_time = 0.0
         self.current_state = np.zeros((7, ))
@@ -50,8 +49,10 @@ class F1TenthSim:
 
         self.history = None
         if save_history:
-            self.history = SimulatorHistory(run_name, test_id)
+            self.history = SimulatorHistory(run_name, run_dict.test_id)
             self.history.set_path(self.map_name)
+
+        self.start_time = None
 
     def step(self, action):
         if self.history is not None:
@@ -80,7 +81,10 @@ class F1TenthSim:
         
         done = self.collision or self.lap_complete
         if done: 
+            computation_time = time.time() - self.start_time
+            print(f"Test lap {self.lap_number} completed in {computation_time:.3f} seconds")
             self.history.save_history()
+            if self.lap_number == 0: self.history.save_run_dict(self.run_dict, computation_time)
 
         if self.collision:
             print(f"{self.lap_number} COLLISION: Time: {self.current_time:.2f}, Progress: {100*progress:.1f}")
@@ -128,6 +132,7 @@ class F1TenthSim:
         """
         # reset counters and data members
         self.current_time = 0.0
+        self.start_time = time.time()
 
         pose = self.center_line.get_start_pose() #TODO: update this to give different poses based on lap number.
         self.dynamics_simulator.reset(pose)
@@ -137,6 +142,7 @@ class F1TenthSim:
         obs, done = self.step(action)
 
         self.lap_number += 1
+        print(f"Starting lap {self.lap_number} on track: {self.map_name} with TestID: {self.run_dict.test_id}")
         
         return obs, done
 
