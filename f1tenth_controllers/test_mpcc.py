@@ -96,7 +96,7 @@ def tune_mpcc_points():
 
     start_time = time.time()
     # point_list = [5, 10]
-    point_list = [4, 8]
+    point_list = [6]
     # point_list = [15, 20]
     # point_list = [5, 10, 15, 20]
     for points in point_list:

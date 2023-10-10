@@ -10,7 +10,7 @@ class MapData:
         # self.path = "map_data/"
         self.map_name = map_name
 
-        self.xs, ys = None, None
+        self.xs, self.ys = None, None
         self.t_ss, self.t_xs, self.t_ys, self.t_ths, self.t_ks, self.t_vs, self.t_accs = None, None, None, None, None, None, None
 
         self.N = 0
