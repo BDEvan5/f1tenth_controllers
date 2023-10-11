@@ -99,7 +99,7 @@ class F1TenthSim:
         progress = self.center_line.calculate_pose_progress(pose)
         
         done = False
-        if progress > 0.99 and self.current_time > 5: done = True
+        if progress > 0.999 and self.current_time > 5: done = True
         if self.current_time > 300: 
             print("Time limit reached")
             done = True

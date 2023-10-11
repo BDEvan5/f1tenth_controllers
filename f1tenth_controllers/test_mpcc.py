@@ -1,5 +1,7 @@
 from f1tenth_controllers.f1tenth_sim.f1tenth_sim import F1TenthSim 
 from f1tenth_controllers.mpcc.ConstantMPCC import ConstantMPCC
+from f1tenth_controllers.path_following.PurePursuit import PurePursuit
+
 import numpy as np
 import yaml 
 import time, os
@@ -8,20 +10,7 @@ from f1tenth_controllers.analysis.plot_trajectory import plot_analysis
 from f1tenth_controllers.analysis.BuildPlannerDfs import build_planner_df
 from f1tenth_controllers.analysis.TrackingAccuracy import calculate_tracking_accuracy
 
-map_list = ["Austin",
-                 "Catalunya",
-                 "Monza",
-                 "Sakhir",
-                 "SaoPaulo",
-                 "Sepang",
-                 "Silverstone",
-                 "Spielberg",
-                 "Zandvoort",
-                 "Oschersleben"]
 
-mini_map_list = ["Sepang",
-                 "Zandvoort",
-                 "Oschersleben"]
 
 
 def load_configuration(config_name):
@@ -31,8 +20,8 @@ def load_configuration(config_name):
     return run_dict 
 
 
-def run_simulation_loop_laps(env, planner, n_laps):
-    for lap in range(n_laps):
+def run_simulation_loop_laps(env, planner):
+    for lap in range(env.run_dict.number_test_laps):
         observation, done = env.reset()
         while not done:
             action = planner.plan(observation)
@@ -56,21 +45,6 @@ def setup_run_list(experiment_file):
 
     return run_list
 
-def run_test():
-    # map_name = "aut"
-    map_name = "Monza"
-    map_name = "Spielberg"
-    # map_name = "Catalunya"
-
-    print(f"Testing....")
-    std_config = load_configuration("std_config")
-
-    vehicle_name = "TestMPCC1"
-    simulator = F1TenthSim(map_name, std_config, True, vehicle_name)
-    planner = ConstantMPCC(simulator.map_name)
-
-    run_simulation_loop_laps(simulator, planner, 1)
-    plot_analysis(vehicle_name)
 
 def run_profiling(function, name):
     import cProfile, pstats, io
@@ -85,32 +59,10 @@ def run_profiling(function, name):
         ps.print_stats()
         f.write(s.getvalue())
 
-def test_all_maps():
-    std_config = load_configuration("std_config")
-    vehicle_name = "TestMPCC4"
-
-    map_name = "Spielberg"
-    start_time = time.time()
-    for map_name in map_list:
-    # for map_name in mini_map_list:
-        map_start_time = time.time()
-        print(f"Testing on map {map_name}")
-
-        simulator = F1TenthSim(map_name, std_config, True, vehicle_name)
-        planner = ConstantMPCC(simulator.map_name)
-
-        run_simulation_loop_laps(simulator, planner, 1)
-
-        print(f"Time taken for map {map_name}: {(time.time() - map_start_time):.4f}")
-        print(f"")
-
-    print(f"Total time taken: {(time.time() - start_time):.4f}")
-    plot_analysis(vehicle_name)
-
 
 def run_mpcc_experiment():
-    run_list = setup_run_list("tune_points_config")
-    vehicle_name = "TunePointsMPCC3"
+    # run_list = setup_run_list("tune_points_config")
+    # vehicle_name = "TunePointsMPCC3"
 
     # run_list = setup_run_list("tune_frequency_config")
     # vehicle_name = "TuneFrequencyMPCC3"
@@ -118,12 +70,31 @@ def run_mpcc_experiment():
     # run_list = setup_run_list("tuning_config")
     # vehicle_name = "TuneMPCC"
 
+    run_list = setup_run_list("test_maps_config")
+    vehicle_name = "MapsMPCC"
+
     for run_dict in run_list:
 
         simulator = F1TenthSim(run_dict, True, vehicle_name)
         planner = ConstantMPCC(run_dict)
 
-        run_simulation_loop_laps(simulator, planner, 1)
+        run_simulation_loop_laps(simulator, planner)
+
+    calculate_tracking_accuracy(vehicle_name)
+    build_planner_df(vehicle_name)
+    # plot_analysis(vehicle_name)
+
+
+def run_pp_experiment():
+    run_list = setup_run_list("test_maps_config")
+    vehicle_name = "MapsPP"
+
+    for run_dict in run_list:
+
+        simulator = F1TenthSim(run_dict, True, vehicle_name)
+        planner = PurePursuit(run_dict)
+
+        run_simulation_loop_laps(simulator, planner)
 
     calculate_tracking_accuracy(vehicle_name)
     build_planner_df(vehicle_name)
@@ -135,8 +106,8 @@ if __name__ == "__main__":
     # run_profiling(run_test, "mpcc")
     # run_test()
     # test_all_maps()
-    run_mpcc_experiment()
-
+    # run_mpcc_experiment()
+    run_pp_experiment()
 
 
 

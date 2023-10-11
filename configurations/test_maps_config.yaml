@@ -1,0 +1,44 @@
+random_seed: 12345 
+
+
+fov: 20
+timestep: 0.01
+num_beams: 0
+
+vehicle_width: 0.31
+vehicle_length: 0.58
+
+#MPCC params
+vehicle_speed: 2
+
+wheelbase: 0.33
+
+weight_progress: 0
+weight_lag: 1
+weight_contour: 10
+weight_steer: 1
+
+p_initial: 2
+delta_max: 0.4
+p_min: 0
+p_max: 4 
+
+psi_min: -10
+psi_max: 10
+
+number_test_laps: 1
+N: 6
+n_sim_steps: 5
+test_id: "maps"
+
+runs:
+  - map_name: "Austin"
+  - map_name: "Catalunya"
+  - map_name: "Monza"
+  - map_name: "Sakhir"
+  - map_name: "SaoPaulo"
+  - map_name: "Sepang"
+  - map_name: "Silverstone"
+  - map_name: "Spielberg"
+  - map_name: "Zandvoort"
+  - map_name: "Oschersleben"

@@ -1,17 +1,17 @@
 
 import numpy as np
 from f1tenth_controllers.path_following.planner_utils import RaceTrack, get_actuation
+from f1tenth_controllers.path_following.NavigationTrack import NavigationTrack
 
-WHEELBASE = 0.33
-MAX_STEER = 0.4
-MAX_SPEED = 8
-GRAVITY = 9.81
-LOOKAHEAD_DISTANCE = 0.8
 
 
 class PurePursuit:
-    def __init__(self, map_name):
-        self.racetrack = RaceTrack(map_name)
+    def __init__(self, run_dict):
+        self.racetrack = NavigationTrack(run_dict.map_name)
+        # self.racetrack = RaceTrack(run_dict.map_name)
+        self.speed = run_dict.vehicle_speed
+        self.max_steer = run_dict.delta_max
+        self.wheelbase = run_dict.wheelbase
         self.counter = 0
 
     def plan(self, obs):
@@ -23,11 +23,10 @@ class PurePursuit:
         if state[3] < 1:
             return np.array([0.0, 4])
 
-        speed_raceline, steering_angle = get_actuation(state[4], lookahead_point, state[:2], lookahead_distance, WHEELBASE)
-        steering_angle = np.clip(steering_angle, -MAX_STEER, MAX_STEER)
+        speed_raceline, steering_angle = get_actuation(state[4], lookahead_point, state[:2], lookahead_distance, self.wheelbase)
+        steering_angle = np.clip(steering_angle, -self.max_steer, self.max_steer)
             
-        speed = min(speed_raceline, MAX_SPEED) # cap the speed
-        action = np.array([steering_angle, speed])
+        action = np.array([steering_angle, self.speed])
 
         return action
 

@@ -61,6 +61,7 @@ def make_tuning_grid(vehicle_name="TuneMPCC"):
     plt.tight_layout()
     # plt.show()
     plt.savefig(f"Logs/{vehicle_name}/TuningGrid_{vehicle_name}.svg", pad_inches=0.05, bbox_inches='tight')
+    plt.savefig(f"Logs/{vehicle_name}/TuningGrid_{vehicle_name}.pdf", pad_inches=0.05, bbox_inches='tight')
 
 
 

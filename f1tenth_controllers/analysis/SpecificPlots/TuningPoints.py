@@ -15,9 +15,9 @@ def make_tuning_grid(vehicle_name="TunePointsMPCC3"):
     q1 = df["TA_q1"].values
     q3 = df["TA_q3"].values
 
-    plt.plot(df["N"], df["TA_mean"], 'o-', label="Mean")
-    plt.plot(df["N"], df["TA_max"], 'o-', label="Max")
-    plt.fill_between(df["N"], q1, q3, alpha=0.2, label="IQR")
+    plt.plot(df["N"], df["TA_mean"], 'o-', label="Mean", color="#eb3b5a")
+    plt.plot(df["N"], df["TA_max"], 'o-', label="Max", color="#3867d6")
+    plt.fill_between(df["N"], q1, q3, alpha=0.7, label="IQR", color="#fd9644")
     plt.xlabel("N (Prediction Horizon)")
     plt.ylabel("Tracking Error (cm)")
     # plt.ylim([0, 7])
@@ -26,17 +26,20 @@ def make_tuning_grid(vehicle_name="TunePointsMPCC3"):
     plt.grid()
 
     x1, x2, y1, y2 = 3.5, 12.5, -0.2, 2.5
-    axins = plt.gca().inset_axes([0.35, 0.4, 0.57, 0.52], xlim=(x1, x2), ylim=(y1, y2))
+    axins = plt.gca().inset_axes([0.17, 0.4, 0.57, 0.52], xlim=(x1, x2), ylim=(y1, y2))
 
-    axins.plot(df["N"], df["TA_mean"], 'o-', label="Mean")
-    axins.fill_between(df["N"], q1, q3, alpha=0.2, label="IQR")
+    axins.plot(df["N"], df["TA_mean"], 'o-', label="Mean", color="#eb3b5a")
+    axins.fill_between(df["N"], q1, q3, alpha=0.7, label="IQR", color="#fd9644")
     axins.grid(True)
 
     plt.gca().indicate_inset_zoom(axins, edgecolor="black")
 
+    plt.legend()
+
     plt.tight_layout()
     # plt.show()
     plt.savefig(f"Logs/{vehicle_name}/TuningPlotN_{vehicle_name}.svg", pad_inches=0.05, bbox_inches='tight')
+    plt.savefig(f"Logs/{vehicle_name}/TuningPlotN_{vehicle_name}.pdf", pad_inches=0.05, bbox_inches='tight')
 
 
 def make_tuning_grid2(vehicle_name="TunePointsMPCC3"):
@@ -51,9 +54,9 @@ def make_tuning_grid2(vehicle_name="TunePointsMPCC3"):
     q1 = df["TA_q1"].values
     q3 = df["TA_q3"].values
 
-    plt.plot(df["N"], df["TA_mean"], 'o-', label="Mean")
-    plt.plot(df["N"], df["TA_max"], 'o-', label="Max")
-    plt.fill_between(df["N"], q1, q3, alpha=0.2, label="IQR")
+    plt.plot(df["N"], df["TA_mean"], 'o-', label="Mean", color="#eb3b5a")
+    plt.plot(df["N"], df["TA_max"], 'o-', label="Max", color="#3867d6")
+    plt.fill_between(df["N"], q1, q3, alpha=0.2, label="IQR", color="#fd9644")
     plt.xlabel("N (Prediction Horizon)")
     plt.ylabel("Tracking Error (cm)")
     plt.ylim([-0.2, 6.2])
