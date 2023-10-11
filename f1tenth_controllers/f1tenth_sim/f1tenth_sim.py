@@ -79,18 +79,19 @@ class F1TenthSim:
                         "laptime": self.current_time,
                         "progress": progress}
         
-        done = self.collision or self.lap_complete
-        if done: 
-            computation_time = time.time() - self.start_time
-            print(f"Test lap {self.lap_number} completed in {computation_time:.3f} seconds")
-            self.history.save_history()
-            if self.lap_number == 0: self.history.save_run_dict(self.run_dict, computation_time)
 
         if self.collision:
             print(f"{self.lap_number} COLLISION: Time: {self.current_time:.2f}, Progress: {100*progress:.1f}")
         elif self.lap_complete:
             print(f"{self.lap_number} LAP COMPLETE: Time: {self.current_time:.2f}, Progress: {(100*progress):.1f}")
 
+        done = self.collision or self.lap_complete
+        if done: 
+            computation_time = time.time() - self.start_time
+            print(f"Test lap {self.lap_number} completed in {computation_time:.3f} seconds")
+            self.history.save_history()
+            if self.lap_number == 0: self.history.save_run_dict(self.run_dict, computation_time)
+            print("")
 
         return observation, done
 

@@ -38,17 +38,18 @@ def build_planner_df(vehicle_name):
         progress = np.max(accuracy_data[:, 0])
         racing_cross_track = accuracy_data[:, 1] * 100
 
-        agent_data.append({"Lap": lap_number, "TestMap": testing_map, "TestID": test_id, "Distance": total_distance, "Progress": progress, "Time": time, "TA_mean:": np.mean(racing_cross_track), "TA_q1": np.percentile(racing_cross_track, 25), "TA_q3": np.percentile(racing_cross_track, 75), "TA_std": np.std(racing_cross_track), "TA_max": np.max(racing_cross_track)})
+        agent_data.append({"Lap": lap_number, "TestMap": testing_map, "TestID": test_id, "Distance": total_distance, "Progress": progress, "Time": time, "TA_mean": np.mean(racing_cross_track), "TA_q1": np.percentile(racing_cross_track, 25), "TA_q3": np.percentile(racing_cross_track, 75), "TA_std": np.std(racing_cross_track), "TA_max": np.max(racing_cross_track)})
 
     agent_df = pd.DataFrame(agent_data)
     agent_df = agent_df.sort_values(by=["TestMap", "TestID", "Lap"])
-    agent_df.to_csv(agent_path + "PlannerResults.csv", index=False)
+    agent_df.to_csv(agent_path + f"PlannerResults_{vehicle_name}.csv", index=False)
 
 
 
 
 if __name__ == '__main__':
-    build_planner_df("TunePointsMPCC2")
+    build_planner_df("TuneMPCC")
+    # build_planner_df("TunePointsMPCC2")
 
 
 

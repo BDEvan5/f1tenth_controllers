@@ -28,35 +28,26 @@ psi_min: -10
 psi_max: 10
 
 number_test_laps: 1
-# map_name: "Sepang"
+N: 3
 map_name: "Oschersleben"
 
 runs:
-  # - N: 3
-  #   test_id: 3
-  # - N: 4
+  # - n_sim_steps: 2
+  #   test_id: 2
+  - n_sim_steps: 3
+    test_id: 3
+  # - n_sim_steps: 4
   #   test_id: 4
-  # - N: 5
+  # - n_sim_steps: 5
   #   test_id: 5
-  # - N: 6
-  #   test_id: 6
-  # - N: 7
+  - n_sim_steps: 6
+    test_id: 6
+  # - n_sim_steps: 7
   #   test_id: 7
-  # - N: 8
+  # - n_sim_steps: 8
   #   test_id: 8
-  # - N: 9
-  #   test_id: 9
-  # - N: 10
+  - n_sim_steps: 9
+    test_id: 9
+  # - n_sim_steps: 10
   #   test_id: 10
-  # - N: 11
-  #   test_id: 11
-  # - N: 12
-  #   test_id: 12
-  # - N: 15
-  #   test_id: 15
-  # - N: 20
-  #   test_id: 20
-  - N: 30
-    test_id: 30
-
 

@@ -108,9 +108,15 @@ def test_all_maps():
     plot_analysis(vehicle_name)
 
 
-def tune_mpcc_points():
+def run_mpcc_experiment():
     run_list = setup_run_list("tune_points_config")
-    vehicle_name = "TunePointsMPCC2"
+    vehicle_name = "TunePointsMPCC3"
+
+    # run_list = setup_run_list("tune_frequency_config")
+    # vehicle_name = "TuneFrequencyMPCC3"
+
+    # run_list = setup_run_list("tuning_config")
+    # vehicle_name = "TuneMPCC"
 
     for run_dict in run_list:
 
@@ -121,7 +127,7 @@ def tune_mpcc_points():
 
     calculate_tracking_accuracy(vehicle_name)
     build_planner_df(vehicle_name)
-    plot_analysis(vehicle_name)
+    # plot_analysis(vehicle_name)
 
 
 if __name__ == "__main__":
@@ -129,7 +135,7 @@ if __name__ == "__main__":
     # run_profiling(run_test, "mpcc")
     # run_test()
     # test_all_maps()
-    tune_mpcc_points()
+    run_mpcc_experiment()
 
 
 
