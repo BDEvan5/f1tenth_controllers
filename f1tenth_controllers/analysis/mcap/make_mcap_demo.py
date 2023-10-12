@@ -96,7 +96,7 @@ with open(file_name, "wb") as stream:
     )
 
     grid_channel_id = writer.register_channel(
-        topic="GridMap",
+        topic="grid",
         message_encoding=MessageEncoding.JSON,
         schema_id=schema_id,
     )
@@ -108,18 +108,21 @@ with open(file_name, "wb") as stream:
             "nsec": int(start_time - int(start_time * 1e-9)),
         }
     grid["pose"] = {
-            "position": {"x": 0, "y": 0, "z": 0},
+            "position": {"x": map_data.map_origin[0], "y": map_data.map_origin[1], "z": 0},
             "orientation": {"x": 0, "y": 0, "z": 0, "w": 0},
         }
-    grid["frame_id"] = "o"
+    grid["frame_id"] = "map"
     grid["column_count"] = map_data.map_img.shape[0]
     grid["cell_size"] = {"x": 0.05, "y": 0.05}
-    grid["row_stride"] = 4 * map_data.map_img.shape[1]
+    grid["row_stride"] =  map_data.map_img.shape[1] * 4
     grid["cell_stride"] = 4
     grid["fields"] = [
-        {"name": "x", "offset": 0, "type": 7},
+        {"name": "red", "offset": 0, "type": 7},
+        {"name": "blue", "offset": 0, "type": 7},
+        {"name": "green", "offset": 0, "type": 7}
     ]
-    grid["data"] = base64.b64encode(map_data.map_img).decode("utf-8")
+    img = map_data.map_img.astype(np.float32) * 255
+    grid["data"] = base64.b64encode(img).decode("utf-8")
 
     writer.add_message(
         channel_id=grid_channel_id,
@@ -129,7 +132,7 @@ with open(file_name, "wb") as stream:
     )
 
     timestep = 0.05
-    for i in range(600):
+    for i in range(len(states)):
         time = start_time + i * 1e9 * timestep
         time_in_s = int(time * 1e-9)
         time_in_ns = int(time - time_in_s)
@@ -139,7 +142,7 @@ with open(file_name, "wb") as stream:
         qw = np.cos(states[i, 4]/2)
  
         pose["pose"] = {
-            "position": {"x": states[i, 0], "y": states[i, 1], "z": i},
+            "position": {"x": states[i, 0], "y": states[i, 1], "z": 0},
             "orientation": {"x": 0, "y": 0, "z": qz, "w": qw},
         }
         pose["frame_id"] = "map"
