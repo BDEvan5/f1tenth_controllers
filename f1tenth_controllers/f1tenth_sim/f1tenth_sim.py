@@ -27,7 +27,6 @@ import numpy as np
     length: length of the vehicle in meters
 '''
 
-
 class F1TenthSim:
     """
             seed (int, default=12345): seed for random state and reproducibility

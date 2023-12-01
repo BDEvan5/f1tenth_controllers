@@ -1,5 +1,5 @@
-import numpy as np 
 import matplotlib.pyplot as plt
+import numpy as np 
 import casadi as ca
 
 from f1tenth_controllers.mpcc.ReferencePath import ReferencePath
@@ -12,7 +12,7 @@ VERBOSE = False
 NX = 4
 NU = 2
 
-class ConstantMPCC:
+class ConstantMPCC2:
     def __init__(self, run_dict, N=None):
         self.params = run_dict
         self.rp = ReferencePath(run_dict.map_name, 0.25)
@@ -41,12 +41,12 @@ class ConstantMPCC:
         
         self.U = ca.MX.sym('U', NU, self.N)
         self.X = ca.MX.sym('X', NX, (self.N + 1))
-        self.P = ca.MX.sym('P', NX + 2 * self.N) # init state and boundaries of the reference path
+        self.P = ca.MX.sym('P', NX) # init state 
 
     def init_constraints(self):
         '''Initialize upper and lower bounds for state and control variables'''
-        self.lbg = np.zeros((NX * (self.N + 1) + self.N, 1))
-        self.ubg = np.zeros((NX * (self.N + 1) + self.N, 1))
+        self.lbg = np.zeros((NX * (self.N + 1), 1))
+        self.ubg = np.zeros((NX * (self.N + 1), 1))
         self.lbx = np.zeros((NX + (NX + NU) * self.N, 1))
         self.ubx = np.zeros((NX + (NX + NU) * self.N, 1))
                 
@@ -74,8 +74,6 @@ class ConstantMPCC:
             st_next_euler = self.X[:, k] + (self.dt * k1)
             self.g = ca.vertcat(self.g, st_next - st_next_euler)  # add dynamics constraint
 
-            self.g = ca.vertcat(self.g, self.P[NX + 2 * k] * st_next[0] - self.P[NX + 2 * k + 1] * st_next[1])  # LB<=ax-by<=UB  :represents path boundary constraints
-
     def init_objective(self):
         self.obj = 0  # Objective function
         for k in range(self.N):
@@ -87,7 +85,6 @@ class ConstantMPCC:
 
             self.obj = self.obj + countour_error **2 * self.params.weight_contour  
             self.obj = self.obj + lag_error **2 * self.params.weight_lag
-            self.obj = self.obj - self.U[1, k] * self.params.weight_progress 
             self.obj = self.obj + (self.U[0, k]) ** 2 * self.params.weight_steer 
             
     def init_solver(self):
@@ -101,9 +98,7 @@ class ConstantMPCC:
     def plan(self, obs):
         x0 = self.build_initial_state(obs)
         self.construct_warm_start_soln(x0) 
-        self.set_up_constraints()
-        p = self.generate_parameters(x0)
-        controls = self.solve(p)
+        controls = self.solve(x0)
 
         action = np.array([controls[0, 0], self.params.vehicle_speed])
 
@@ -115,42 +110,6 @@ class ConstantMPCC:
         x0 = np.append(x0, self.rp.calculate_s(x0[0:2]))
 
         return x0
-
-    def generate_parameters(self, x0_in):
-        p = np.zeros(NX + 2 * self.N)
-        p[:NX] = x0_in
-
-        for k in range(self.N):  # set the reference controls and path boundary conditions to track
-            s_progress = self.X0[k, 3]
-            right_x = self.rp.right_lut_x(s_progress).full()[0, 0]
-            right_y = self.rp.right_lut_y(s_progress).full()[0, 0]
-            left_x = self.rp.left_lut_x(s_progress).full()[0, 0]
-            left_y = self.rp.left_lut_y(s_progress).full()[0, 0]
-
-            delta_x = right_x - left_x
-            delta_y = right_y - left_y
-            p[NX + 2 * k:NX + 2 * k + 2] = [-delta_x, delta_y]
-
-        return p
-    
-    def set_up_constraints(self):
-        for k in range(self.N):  # set the reference controls and path boundary conditions to track
-            s_progress = self.X0[k, 3]
-            right_x = self.rp.right_lut_x(s_progress).full()[0, 0]
-            right_y = self.rp.right_lut_y(s_progress).full()[0, 0]
-            left_x = self.rp.left_lut_x(s_progress).full()[0, 0]
-            left_y = self.rp.left_lut_y(s_progress).full()[0, 0]
-
-            delta_x = right_x - left_x
-            delta_y = right_y - left_y
-
-            self.lbg[NX - 1 + (NX + 1) * (k + 1), 0] = min(-delta_x * right_x - delta_y * right_y,
-                                    -delta_x * left_x - delta_y * left_y) 
-            self.ubg[NX - 1 + (NX + 1) * (k + 1), 0] = max(-delta_x * right_x - delta_y * right_y,
-                                    -delta_x * left_x - delta_y * left_y)
-
-        self.lbg[NX *2, 0] = - ca.inf
-        self.ubg[NX *2, 0] = ca.inf
 
     def solve(self, p):
         x_init = ca.vertcat(ca.reshape(self.X0.T, NX * (self.N + 1), 1),

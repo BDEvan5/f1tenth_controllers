@@ -1,4 +1,5 @@
 from f1tenth_controllers.f1tenth_sim.f1tenth_sim import F1TenthSim 
+from f1tenth_controllers.mpcc.ConstantMPCC2 import ConstantMPCC2
 from f1tenth_controllers.mpcc.ConstantMPCC import ConstantMPCC
 from f1tenth_controllers.path_following.PurePursuit import PurePursuit
 
@@ -60,6 +61,22 @@ def run_profiling(function, name):
         f.write(s.getvalue())
 
 
+def run_mpcc_experiment2():
+    run_list = setup_run_list("test_maps_config")
+    vehicle_name = "MapsMPCC2"
+
+    for run_dict in run_list:
+
+        simulator = F1TenthSim(run_dict, True, vehicle_name)
+        planner = ConstantMPCC2(run_dict)
+
+        run_simulation_loop_laps(simulator, planner)
+
+    calculate_tracking_accuracy(vehicle_name)
+    build_planner_df(vehicle_name)
+    plot_analysis(vehicle_name)
+
+
 def run_mpcc_experiment():
     # run_list = setup_run_list("tune_points_config")
     # vehicle_name = "TunePointsMPCC3"
@@ -82,7 +99,7 @@ def run_mpcc_experiment():
 
     calculate_tracking_accuracy(vehicle_name)
     build_planner_df(vehicle_name)
-    # plot_analysis(vehicle_name)
+    plot_analysis(vehicle_name)
 
 
 def run_pp_experiment():
@@ -106,8 +123,9 @@ if __name__ == "__main__":
     # run_profiling(run_test, "mpcc")
     # run_test()
     # test_all_maps()
-    # run_mpcc_experiment()
-    run_pp_experiment()
+    run_mpcc_experiment()
+    # run_mpcc_experiment2()
+    # run_pp_experiment()
 
 
 
